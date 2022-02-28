@@ -14,7 +14,6 @@ namespace gen
     {
         VkViewport viewport;
         VkRect2D scissor;
-        VkPipelineViewportStateCreateInfo viewportInfo;
         VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo;
         VkPipelineRasterizationStateCreateInfo rasterizationInfo;
         VkPipelineMultisampleStateCreateInfo multisampleInfo;
@@ -34,7 +33,9 @@ namespace gen
 
         // delete copy constructors
         GenPipeline(const GenPipeline &) = delete;
-        void operator=(const GenPipeline &) = delete;
+        GenPipeline& operator=(const GenPipeline &) = delete;
+
+        void bind(VkCommandBuffer commandBuffer);
 
         static PipelineConfigInfo defaultPipelineConfigInfo(uint32_t width, uint32_t height);
 

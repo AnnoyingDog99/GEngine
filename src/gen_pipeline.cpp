@@ -1,5 +1,7 @@
 #include "gen_pipeline.hpp"
+#include "gen_model.hpp"
 
+// std
 #include <fstream>
 #include <stdexcept>
 #include <iostream>
@@ -25,7 +27,6 @@ namespace gen
         vkDestroyShaderModule(genDevice.device(), vertShaderModule, nullptr);
         vkDestroyShaderModule(genDevice.device(), fragShaderModule, nullptr);
         vkDestroyPipeline(genDevice.device(), graphicsPipeline, nullptr);
-
     }
 
     std::vector<char> GenPipeline::readFile(const std::string &filepath)
@@ -72,20 +73,29 @@ namespace gen
         shaderStages[0].pNext = nullptr;
         shaderStages[0].pSpecializationInfo = nullptr;
         // fragment shader
-        shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        shaderStages[0].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-        shaderStages[0].module = fragShaderModule;
-        shaderStages[0].pName = "main"; // name of entry function in vertex shader
-        shaderStages[0].flags = 0;
-        shaderStages[0].pNext = nullptr;
-        shaderStages[0].pSpecializationInfo = nullptr;
+        shaderStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        shaderStages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+        shaderStages[1].module = fragShaderModule;
+        shaderStages[1].pName = "main"; // name of entry function in vertex shader
+        shaderStages[1].flags = 0;
+        shaderStages[1].pNext = nullptr;
+        shaderStages[1].pSpecializationInfo = nullptr;
 
+        auto bindingDescription = GenModel::Vertex::getBindingDescriptions();
+        auto attributeDescriptions = GenModel::Vertex::getAttributeDescriptions();
         VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
         vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-        vertexInputInfo.vertexAttributeDescriptionCount = 0;
-        vertexInputInfo.vertexBindingDescriptionCount = 0;
-        vertexInputInfo.pVertexAttributeDescriptions = nullptr;
-        vertexInputInfo.pVertexBindingDescriptions = nullptr;
+        vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+        vertexInputInfo.vertexBindingDescriptionCount = static_cast<uint32_t>(bindingDescription.size());
+        vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+        vertexInputInfo.pVertexBindingDescriptions = bindingDescription.data();
+
+        VkPipelineViewportStateCreateInfo viewportInfo{};
+        viewportInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+        viewportInfo.viewportCount = 1;
+        viewportInfo.pViewports = &configInfo.viewport;
+        viewportInfo.scissorCount = 1;
+        viewportInfo.pScissors = &configInfo.scissor;
 
         VkGraphicsPipelineCreateInfo pipelineInfo{};
         pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -93,7 +103,7 @@ namespace gen
         pipelineInfo.pStages = shaderStages;
         pipelineInfo.pVertexInputState = &vertexInputInfo;
         pipelineInfo.pInputAssemblyState = &configInfo.inputAssemblyInfo;
-        pipelineInfo.pViewportState = &configInfo.viewportInfo;
+        pipelineInfo.pViewportState = &viewportInfo;
         pipelineInfo.pRasterizationState = &configInfo.rasterizationInfo;
         pipelineInfo.pMultisampleState = &configInfo.multisampleInfo;
         pipelineInfo.pColorBlendState = &configInfo.colorBlendInfo;
@@ -126,6 +136,11 @@ namespace gen
         }
     }
 
+    void GenPipeline::bind(VkCommandBuffer commandBuffer)
+    {
+        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+    }
+
     PipelineConfigInfo GenPipeline::defaultPipelineConfigInfo(uint32_t width, uint32_t height)
     {
         PipelineConfigInfo configInfo{};
@@ -146,12 +161,6 @@ namespace gen
         // any pixels outside of the scissorcs rectangle will be discarded
         configInfo.scissor.offset = {0, 0};
         configInfo.scissor.extent = {width, height};
-
-        configInfo.viewportInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-        configInfo.viewportInfo.viewportCount = 1;
-        configInfo.viewportInfo.pViewports = &configInfo.viewport;
-        configInfo.viewportInfo.scissorCount = 1;
-        configInfo.viewportInfo.pScissors = &configInfo.scissor;
 
         // rasterization stage: breaks up geometry into fragments for each pixel that overlaps
         configInfo.rasterizationInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
