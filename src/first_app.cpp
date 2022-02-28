@@ -3,6 +3,7 @@
 // std
 #include <stdexcept>
 #include <array>
+#include <cassert>
 
 namespace gen
 {
@@ -11,7 +12,7 @@ namespace gen
     {
         loadModels();
         createPipelineLayout();
-        createPipeline();
+        recreateSwapChain();
         createCommandBuffers();
     }
 
@@ -56,16 +57,47 @@ namespace gen
 
     void FirstApp::createPipeline()
     {
-        auto pipelineConfig = GenPipeline::defaultPipelineConfigInfo(genSwapChain.width(), genSwapChain.height());
-        pipelineConfig.renderPass = genSwapChain.getRenderPass();
+        assert(genSwapChain != nullptr && "Cannot create pipeline before swap chain");
+        assert(pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
+        PipelineConfigInfo pipelineConfig{};
+        GenPipeline::defaultPipelineConfigInfo(pipelineConfig);
+        pipelineConfig.renderPass = genSwapChain->getRenderPass();
         pipelineConfig.pipelineLayout = pipelineLayout;
         genPipeline = std::make_unique<GenPipeline>(genDevice, "shaders/simple_shader.vert.spv", "shaders/simple_shader.frag.spv", pipelineConfig);
+    }
+
+    void FirstApp::recreateSwapChain()
+    {
+        auto extent = genWindow.getExtent();
+        while (extent.width == 0 || extent.height == 0)
+        {
+            extent = genWindow.getExtent();
+            glfwWaitEvents();
+        }
+
+        vkDeviceWaitIdle(genDevice.device());
+        genSwapChain = nullptr;
+        if (genSwapChain == nullptr)
+        {
+            genSwapChain = std::make_unique<GenSwapChain>(genDevice, extent);
+        }
+        else
+        {
+            genSwapChain = std::make_unique<GenSwapChain>(genDevice, extent, std::move(genSwapChain));
+            if (genSwapChain->imageCount() != commandBuffers.size())
+            {
+                freeCommandBuffers();
+                createCommandBuffers();
+            }
+        }
+        // if render pass compatible do nothing
+        createPipeline();
     }
 
     void FirstApp::createCommandBuffers()
     {
 
-        commandBuffers.resize(genSwapChain.imageCount());
+        commandBuffers.resize(genSwapChain->imageCount());
 
         VkCommandBufferAllocateInfo allocInfo = {};
         allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -77,55 +109,87 @@ namespace gen
         {
             throw std::runtime_error("failed to allocate command buffers!");
         }
+    }
 
-        for (int i = 0; i < commandBuffers.size(); i++)
+    void FirstApp::freeCommandBuffers()
+    {
+        vkFreeCommandBuffers(genDevice.device(), genDevice.getCommandPool(), static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
+        commandBuffers.clear();
+    }
+
+    void FirstApp::recordCommandBuffer(int imageIndex)
+    {
+        VkCommandBufferBeginInfo beginInfo{};
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        if (vkBeginCommandBuffer(commandBuffers[imageIndex], &beginInfo) != VK_SUCCESS)
         {
-            VkCommandBufferBeginInfo beginInfo{};
-            beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-            if (vkBeginCommandBuffer(commandBuffers[i], &beginInfo) != VK_SUCCESS)
-            {
-                throw std::runtime_error("failed to begin recording command buffers!");
-            }
+            throw std::runtime_error("failed to begin recording command buffers!");
+        }
 
-            VkRenderPassBeginInfo renderpassInfo{};
-            renderpassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-            renderpassInfo.renderPass = genSwapChain.getRenderPass();
-            renderpassInfo.framebuffer = genSwapChain.getFrameBuffer(i);
+        VkRenderPassBeginInfo renderpassInfo{};
+        renderpassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        renderpassInfo.renderPass = genSwapChain->getRenderPass();
+        renderpassInfo.framebuffer = genSwapChain->getFrameBuffer(imageIndex);
 
-            renderpassInfo.renderArea.offset = {0, 0};
-            renderpassInfo.renderArea.extent = genSwapChain.getSwapChainExtent();
+        renderpassInfo.renderArea.offset = {0, 0};
+        renderpassInfo.renderArea.extent = genSwapChain->getSwapChainExtent();
 
-            std::array<VkClearValue, 2> clearValues{};
-            clearValues[0].color = {0.1f, 0.1f, 0.1f, 1.0f};
-            clearValues[1].depthStencil = {1.0f, 0};
-            renderpassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-            renderpassInfo.pClearValues = clearValues.data();
+        std::array<VkClearValue, 2> clearValues{};
+        clearValues[0].color = {0.1f, 0.1f, 0.1f, 1.0f};
+        clearValues[1].depthStencil = {1.0f, 0};
+        renderpassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+        renderpassInfo.pClearValues = clearValues.data();
 
-            // record to command buffer
-            vkCmdBeginRenderPass(commandBuffers[i], &renderpassInfo, VK_SUBPASS_CONTENTS_INLINE);
+        // record to command buffer
+        vkCmdBeginRenderPass(commandBuffers[imageIndex], &renderpassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-            genPipeline->bind(commandBuffers[i]);
-            genModel->bind(commandBuffers[i]);
-            genModel->draw(commandBuffers[i]);
+        VkViewport viewport{};
+        viewport.x = 0.0f;
+        viewport.y = 0.0f;
+        viewport.width = static_cast<float>(genSwapChain->getSwapChainExtent().width);
+        viewport.height = static_cast<float>(genSwapChain->getSwapChainExtent().height);
+        viewport.minDepth = 0.0f;
+        viewport.maxDepth = 1.0f;
+        VkRect2D scissor{{0, 0}, genSwapChain->getSwapChainExtent()};
+        vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &viewport);
+        vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &scissor);
 
-            vkCmdEndRenderPass(commandBuffers[i]);
-            if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS)
-            {
-                std::runtime_error("failed to record command buffer!");
-            }
+        genPipeline->bind(commandBuffers[imageIndex]);
+        genModel->bind(commandBuffers[imageIndex]);
+        genModel->draw(commandBuffers[imageIndex]);
+
+        vkCmdEndRenderPass(commandBuffers[imageIndex]);
+        if (vkEndCommandBuffer(commandBuffers[imageIndex]) != VK_SUCCESS)
+        {
+            std::runtime_error("failed to record command buffer!");
         }
     }
 
     void FirstApp::drawFrame()
     {
         uint32_t imageIndex;
-        auto result = genSwapChain.acquireNextImage(&imageIndex); // fetches the index of the frame we should render to next
+        auto result = genSwapChain->acquireNextImage(&imageIndex); // fetches the index of the frame we should render to next
+
+        if (result == VK_ERROR_OUT_OF_DATE_KHR) // error can occur after the window had been resized
+        {
+            recreateSwapChain();
+            return;
+        }
+
         if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
         {
             throw std::runtime_error("failed to acquire swap chain image!");
         }
 
-        result = genSwapChain.submitCommandBuffers(&commandBuffers[imageIndex], &imageIndex); // submit the provided command buffer to our device graphics queue, while handeling cpu and gpu synchronization
+        recordCommandBuffer(imageIndex);
+        result = genSwapChain->submitCommandBuffers(&commandBuffers[imageIndex], &imageIndex); // submit the provided command buffer to our device graphics queue, while handeling cpu and gpu synchronization
+        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || genWindow.wasWindowResized())
+        {
+            genWindow.resetWindowResizedFlag();
+            recreateSwapChain();
+            return;
+        }
+
         if (result != VK_SUCCESS)
         {
             throw std::runtime_error("failed to submit command buffer!");

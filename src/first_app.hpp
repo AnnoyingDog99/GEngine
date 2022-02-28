@@ -32,11 +32,14 @@ namespace gen
         void createPipelineLayout();
         void createPipeline();
         void createCommandBuffers();
+        void freeCommandBuffers();
         void drawFrame();
+        void recreateSwapChain();
+        void recordCommandBuffer(int imageIndex);
 
         GenWindow genWindow{WIDTH, HEIGHT, "Vulkan window"};
         GenDevice genDevice{genWindow};
-        GenSwapChain genSwapChain{genDevice, genWindow.getExtend()};
+        std::unique_ptr<GenSwapChain> genSwapChain;
 
         std::unique_ptr<GenPipeline> genPipeline;
         VkPipelineLayout pipelineLayout;

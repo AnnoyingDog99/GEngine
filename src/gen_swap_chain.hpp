@@ -8,6 +8,7 @@
 // std lib headers
 #include <string>
 #include <vector>
+#include <memory>
 
 namespace gen
 {
@@ -18,6 +19,7 @@ namespace gen
     static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
     GenSwapChain(GenDevice &deviceRef, VkExtent2D windowExtent);
+    GenSwapChain(GenDevice &deviceRef, VkExtent2D windowExtent, std::shared_ptr<GenSwapChain> previous);
     ~GenSwapChain();
 
     GenSwapChain(const GenSwapChain &) = delete;
@@ -42,6 +44,7 @@ namespace gen
     VkResult submitCommandBuffers(const VkCommandBuffer *buffers, uint32_t *imageIndex);
 
   private:
+    void init();
     void createSwapChain();
     void createImageViews();
     void createDepthResources();
@@ -72,6 +75,7 @@ namespace gen
     VkExtent2D windowExtent;
 
     VkSwapchainKHR swapChain;
+    std::shared_ptr<GenSwapChain> oldSwapChain;
 
     std::vector<VkSemaphore> imageAvailableSemaphores;
     std::vector<VkSemaphore> renderFinishedSemaphores;
