@@ -4,7 +4,7 @@
 #include "gen_pipeline.hpp"
 #include "gen_device.hpp"
 #include "gen_swap_chain.hpp"
-#include "gen_model.hpp"
+#include "gen_game_object.hpp"
 
 // std
 #include <memory>
@@ -28,7 +28,7 @@ namespace gen
         void run();
 
     private:
-        void loadModels();
+        void loadGameObjects();
         void createPipelineLayout();
         void createPipeline();
         void createCommandBuffers();
@@ -36,6 +36,7 @@ namespace gen
         void drawFrame();
         void recreateSwapChain();
         void recordCommandBuffer(int imageIndex);
+        void renderGameObjects(VkCommandBuffer commandBuffer);
 
         GenWindow genWindow{WIDTH, HEIGHT, "Vulkan window"};
         GenDevice genDevice{genWindow};
@@ -44,6 +45,6 @@ namespace gen
         std::unique_ptr<GenPipeline> genPipeline;
         VkPipelineLayout pipelineLayout;
         std::vector<VkCommandBuffer> commandBuffers;
-        std::unique_ptr<GenModel> genModel;
+        std::vector<GenGameObject> gameObjects;
     };
 }
