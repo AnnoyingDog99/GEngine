@@ -60,20 +60,19 @@ namespace gen
         genPipeline = std::make_unique<GenPipeline>(genDevice, "shaders/simple_shader.vert.spv", "shaders/simple_shader.frag.spv", pipelineConfig);
     }
 
-    void SimpleRenderSystem::renderGameObjects(VkCommandBuffer commandBuffer, std::vector<GenGameObject> &gameObjects)
+    void SimpleRenderSystem::renderGameObjects(VkCommandBuffer commandBuffer, std::vector<GenGameObject> &gameObjects, const GenCamera &camera)
     {
         genPipeline->bind(commandBuffer);
 
         for (auto &obj : gameObjects)
         {
 
-            obj.transform.rotation.y = glm::mod(obj.transform.rotation.y + 0.01f, glm::two_pi<float>());
-            obj.transform.rotation.x = glm::mod(obj.transform.rotation.x + 0.005f, glm::two_pi<float>());
-
+            obj.transform.rotation.y = glm::mod(obj.transform.rotation.y + 0.001f, glm::two_pi<float>());
+            obj.transform.rotation.x = glm::mod(obj.transform.rotation.x + 0.0005f, glm::two_pi<float>());
 
             SimplePushConstantData push{};
             push.color = obj.color;
-            push.transform = obj.transform.mat4();
+            push.transform = camera.getProjection() * obj.transform.mat4();
 
             vkCmdPushConstants(
                 commandBuffer,

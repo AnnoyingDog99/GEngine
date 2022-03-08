@@ -1,5 +1,6 @@
 #pragma once
 
+#include "gen_camera.hpp"
 #include "gen_device.hpp"
 #include "gen_game_object.hpp"
 #include "gen_pipeline.hpp"
@@ -20,7 +21,7 @@ namespace gen
         SimpleRenderSystem(const SimpleRenderSystem &) = delete;
         SimpleRenderSystem &operator=(const SimpleRenderSystem &) = delete;
 
-        void renderGameObjects(VkCommandBuffer commandBuffer, std::vector<GenGameObject> &gameObjects);
+        void renderGameObjects(VkCommandBuffer commandBuffer, std::vector<GenGameObject> &gameObjects, const GenCamera &camera);
 
     private:
         void createPipelineLayout();

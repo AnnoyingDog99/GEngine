@@ -26,6 +26,11 @@ namespace gen
             return genSwapChain->getRenderPass();
         }
 
+        float getAspectRatio() const
+        {
+            return genSwapChain->extentAspectRatio();
+        }
+
         bool isFrameInProgress() const
         {
             return isFrameStarted;
