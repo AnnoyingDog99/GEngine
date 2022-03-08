@@ -1,10 +1,9 @@
 #pragma once
 
-#include "gen_window.hpp"
-#include "gen_pipeline.hpp"
 #include "gen_device.hpp"
-#include "gen_swap_chain.hpp"
 #include "gen_game_object.hpp"
+#include "gen_window.hpp"
+#include "gen_renderer.hpp"
 
 // std
 #include <memory>
@@ -29,22 +28,11 @@ namespace gen
 
     private:
         void loadGameObjects();
-        void createPipelineLayout();
-        void createPipeline();
-        void createCommandBuffers();
-        void freeCommandBuffers();
-        void drawFrame();
-        void recreateSwapChain();
-        void recordCommandBuffer(int imageIndex);
-        void renderGameObjects(VkCommandBuffer commandBuffer);
 
         GenWindow genWindow{WIDTH, HEIGHT, "Vulkan window"};
         GenDevice genDevice{genWindow};
-        std::unique_ptr<GenSwapChain> genSwapChain;
+        GenRenderer genRenderer{genWindow, genDevice};
 
-        std::unique_ptr<GenPipeline> genPipeline;
-        VkPipelineLayout pipelineLayout;
-        std::vector<VkCommandBuffer> commandBuffers;
         std::vector<GenGameObject> gameObjects;
     };
 }
