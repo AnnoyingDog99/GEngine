@@ -36,6 +36,11 @@ namespace gen
             frameBufferResized = false;
         }
 
+        GLFWwindow *getGLFWWindow() const
+        {
+            return window;
+        }
+
         void createWindowSurface(VkInstance instance, VkSurfaceKHR *surface);
 
     private:
