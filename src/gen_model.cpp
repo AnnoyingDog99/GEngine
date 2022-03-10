@@ -1,7 +1,35 @@
 #include "gen_model.hpp"
+#include "gen_utils.hpp"
+
+// tiny
+#define TINYOBJLOADER_IMPLEMENTATION
+#include <tiny_obj_loader.h>
+
+// glm
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/hash.hpp>
 
 // std
 #include <cassert>
+#include <unordered_map>
+
+#ifndef ENGINE_DIR
+#define ENGINE_DIR "../"
+#endif
+
+namespace std
+{
+    template <>
+    struct hash<gen::GenModel::Vertex>
+    {
+        size_t operator()(gen::GenModel::Vertex const &vertex) const
+        {
+            size_t seed = 0;
+            gen::hashCombine(seed, vertex.position, vertex.color, vertex.normal, vertex.uv);
+            return seed;
+        }
+    };
+}
 
 namespace gen
 {
@@ -21,6 +49,13 @@ namespace gen
             vkDestroyBuffer(genDevice.device(), indexBuffer, nullptr);
             vkFreeMemory(genDevice.device(), indexBufferMemory, nullptr);
         }
+    }
+
+    std::unique_ptr<GenModel> GenModel::createModelFromFile(GenDevice &device, const std::string &filepath)
+    {
+        Builder builder{};
+        builder.loadModel(ENGINE_DIR + filepath);
+        return std::make_unique<GenModel>(device, builder);
     }
 
     void GenModel::createVertexBuffers(const std::vector<Vertex> &vertices)
@@ -145,5 +180,76 @@ namespace gen
         attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
         attributeDescriptions[1].offset = offsetof(Vertex, color);
         return attributeDescriptions;
+    }
+    void GenModel::Builder::loadModel(const std::string &filepath)
+    {
+        tinyobj::attrib_t attrib;             // stores position, color, normal and texturecoordinate data
+        std::vector<tinyobj::shape_t> shapes; // contains the index values for each face element
+        std::vector<tinyobj::material_t> materials;
+        std::string warn, err;
+
+        if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, filepath.c_str()))
+        {
+            throw std::runtime_error(warn + err);
+        }
+
+        vertices.clear();
+        indices.clear();
+
+        std::unordered_map<Vertex, uint32_t> uniqueVertices{};
+        for (const auto &shape : shapes)
+        {
+            for (const auto &index : shape.mesh.indices)
+            {
+                Vertex vertex{};
+
+                if (index.vertex_index >= 0)
+                { // vertex_index: first value of the face element and says what position value to use, negative value means no index was provided
+                    vertex.position = {
+                        attrib.vertices[3 * index.vertex_index + 0],
+                        attrib.vertices[3 * index.vertex_index + 1],
+                        attrib.vertices[3 * index.vertex_index + 2],
+                    };
+
+                    auto colorIndex = 3 * index.vertex_index + 2;
+                    if (colorIndex < attrib.colors.size())
+                    {
+                        vertex.color = {
+                            attrib.colors[colorIndex - 2],
+                            attrib.colors[colorIndex - 1],
+                            attrib.colors[colorIndex - 0],
+                        };
+                    }
+                    else
+                    {
+                        vertex.color = {1.0f, 1.0f, 1.0f}; // set default color
+                    }
+                }
+
+                if (index.normal_index >= 0)
+                {
+                    vertex.normal = {
+                        attrib.normals[3 * index.normal_index + 0],
+                        attrib.normals[3 * index.normal_index + 1],
+                        attrib.normals[3 * index.normal_index + 2],
+                    };
+                }
+
+                if (index.texcoord_index >= 0)
+                {
+                    vertex.uv = {
+                        attrib.texcoords[2 * index.texcoord_index + 0],
+                        attrib.texcoords[2 * index.texcoord_index + 1],
+                    };
+                }
+
+                if (uniqueVertices.count(vertex) == 0)
+                {
+                    uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
+                    vertices.push_back(vertex);
+                }
+                indices.push_back(uniqueVertices[vertex]);
+            }
+        }
     }
 }
