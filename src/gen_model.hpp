@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gen_device.hpp"
+#include "gen_buffer.hpp"
 
 // glm
 #define GLM_FORCE_RADIANS           // glm functions will except values in radians, not degrees
@@ -58,13 +59,11 @@ namespace gen
 
         GenDevice &genDevice;
 
-        VkBuffer vertexBuffer;
-        VkDeviceMemory vertexBufferMemory;
+        std::unique_ptr<GenBuffer> vertexBuffer;
         uint32_t vertexCount;
 
         bool hasIndexBuffer = false;
-        VkBuffer indexBuffer;
-        VkDeviceMemory indexBufferMemory;
+        std::unique_ptr<GenBuffer> indexBuffer;
         uint32_t indexCount;
     };
 } // namespace gen

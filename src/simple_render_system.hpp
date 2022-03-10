@@ -4,6 +4,7 @@
 #include "gen_device.hpp"
 #include "gen_game_object.hpp"
 #include "gen_pipeline.hpp"
+#include "gen_frame_info.hpp"
 
 // std
 #include <memory>
@@ -21,7 +22,7 @@ namespace gen
         SimpleRenderSystem(const SimpleRenderSystem &) = delete;
         SimpleRenderSystem &operator=(const SimpleRenderSystem &) = delete;
 
-        void renderGameObjects(VkCommandBuffer commandBuffer, std::vector<GenGameObject> &gameObjects, const GenCamera &camera);
+        void renderGameObjects(FrameInfo &frameInfo, std::vector<GenGameObject> &gameObjects);
 
     private:
         void createPipelineLayout();
