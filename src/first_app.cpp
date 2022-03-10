@@ -64,12 +64,19 @@ namespace gen
 
     void FirstApp::loadGameObjects()
     {
-        std::shared_ptr<GenModel> genModel = GenModel::createModelFromFile(genDevice, "models/smooth_vase.obj");
+        std::shared_ptr<GenModel> genModel = GenModel::createModelFromFile(genDevice, "models/flat_vase.obj");
 
-        auto gameObj = GenGameObject::createGameObject();
-        gameObj.model = genModel;
-        gameObj.transform.translation = {.0f, .0f, 2.5f};
-        gameObj.transform.scale = glm::vec3(3.f);
-        gameObjects.push_back(std::move(gameObj));
+        auto flatVase = GenGameObject::createGameObject();
+        flatVase.model = genModel;
+        flatVase.transform.translation = {-.5f, .5f, 2.5f};
+        flatVase.transform.scale = {3.f, 1.5f, 3.f};
+        gameObjects.push_back(std::move(flatVase));
+
+        genModel = GenModel::createModelFromFile(genDevice, "models/smooth_vase.obj");
+        auto smoothVase = GenGameObject::createGameObject();
+        smoothVase.model = genModel;
+        smoothVase.transform.translation = {.5f, .5f, 2.5f};
+        smoothVase.transform.scale = {3.f, 1.5f, 3.f};
+        gameObjects.push_back(std::move(smoothVase));
     }
 }
