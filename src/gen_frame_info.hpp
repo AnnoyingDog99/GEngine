@@ -13,5 +13,6 @@ namespace gen
         float frameTime;
         VkCommandBuffer commandBuffer;
         GenCamera &camera;
+        VkDescriptorSet globalDescriptorSet;
     };
 }

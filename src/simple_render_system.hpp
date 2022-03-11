@@ -16,7 +16,7 @@ namespace gen
     {
 
     public:
-        SimpleRenderSystem(GenDevice &device, VkRenderPass renderPass);
+        SimpleRenderSystem(GenDevice &device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
         ~SimpleRenderSystem();
 
         SimpleRenderSystem(const SimpleRenderSystem &) = delete;
@@ -25,7 +25,7 @@ namespace gen
         void renderGameObjects(FrameInfo &frameInfo, std::vector<GenGameObject> &gameObjects);
 
     private:
-        void createPipelineLayout();
+        void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);
         void createPipeline(VkRenderPass renderPass);
 
         GenDevice &genDevice;

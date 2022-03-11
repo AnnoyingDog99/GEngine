@@ -4,6 +4,7 @@
 #include "gen_game_object.hpp"
 #include "gen_window.hpp"
 #include "gen_renderer.hpp"
+#include "gen_descriptors.hpp"
 
 // std
 #include <memory>
@@ -33,6 +34,8 @@ namespace gen
         GenDevice genDevice{genWindow};
         GenRenderer genRenderer{genWindow, genDevice};
 
+        // order matters (pool should be destroyed before the devices)
+        std::unique_ptr<GenDescriptorPool> globalPool{};
         std::vector<GenGameObject> gameObjects;
     };
 }

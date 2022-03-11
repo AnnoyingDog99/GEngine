@@ -16,13 +16,17 @@ namespace gen
     // temp
     struct SimplePushConstantData
     {
-        glm::mat4 transform{1.f};
+        glm::mat4 modelMatrix{1.f};
         glm::mat4 normalMatrix{1.f};
     };
 
-    SimpleRenderSystem::SimpleRenderSystem(GenDevice &device, VkRenderPass renderPass) : genDevice{device}
+    SimpleRenderSystem::SimpleRenderSystem(
+        GenDevice &device,
+        VkRenderPass renderPass,
+        VkDescriptorSetLayout globalSetLayout)
+        : genDevice{device}
     {
-        createPipelineLayout();
+        createPipelineLayout(globalSetLayout);
         createPipeline(renderPass);
     }
 
@@ -31,17 +35,19 @@ namespace gen
         vkDestroyPipelineLayout(genDevice.device(), pipelineLayout, nullptr);
     }
 
-    void SimpleRenderSystem::createPipelineLayout()
+    void SimpleRenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout)
     {
         VkPushConstantRange pushConstantRange{};
         pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT; // gives access to push constant data to fragment and vertex shaders
         pushConstantRange.offset = 0;
         pushConstantRange.size = sizeof(SimplePushConstantData);
 
+        std::vector<VkDescriptorSetLayout> descriptorSetLayouts{globalSetLayout};
+
         VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        pipelineLayoutInfo.setLayoutCount = 0;
-        pipelineLayoutInfo.pSetLayouts = nullptr; // PipelineSetLayouts is used to pass data other than vertex data to our vertex and fragment shaders (textures, uniform buffers)
+        pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
+        pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data(); // PipelineSetLayouts is used to pass data other than vertex data to our vertex and fragment shaders (textures, uniform buffers)
         pipelineLayoutInfo.pushConstantRangeCount = 1;
         pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange; // PushConstants are a way to very efficiently send a small amount of data to our shader programs
         if (vkCreatePipelineLayout(genDevice.device(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
@@ -64,13 +70,21 @@ namespace gen
     {
         genPipeline->bind(frameInfo.commandBuffer);
 
-        auto projectionView = frameInfo.camera.getProjection() * frameInfo.camera.getView();
+        vkCmdBindDescriptorSets(
+            frameInfo.commandBuffer,
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            pipelineLayout,
+            0, // first set
+            1, // descriptor set count
+            &frameInfo.globalDescriptorSet,
+            0,      // dynamic offset count
+            nullptr // dynamic offsets
+        );
 
         for (auto &obj : gameObjects)
         {
             SimplePushConstantData push{};
-            auto modelMatrix = obj.transform.mat4();
-            push.transform = projectionView * modelMatrix;
+            push.modelMatrix = obj.transform.mat4();
             push.normalMatrix = obj.transform.normalMatrix();
 
             vkCmdPushConstants(
