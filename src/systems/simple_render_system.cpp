@@ -1,4 +1,4 @@
-#include "simple_render_system.hpp"
+#include "point_light_system.hpp"
 
 // glm
 #define GLM_FORCE_RADIANS           // glm functions will except values in radians, not degrees
@@ -13,14 +13,8 @@
 
 namespace gen
 {
-    // temp
-    struct SimplePushConstantData
-    {
-        glm::mat4 modelMatrix{1.f};
-        glm::mat4 normalMatrix{1.f};
-    };
 
-    SimpleRenderSystem::SimpleRenderSystem(
+    PointLightSystem::PointLightSystem(
         GenDevice &device,
         VkRenderPass renderPass,
         VkDescriptorSetLayout globalSetLayout)
@@ -30,17 +24,17 @@ namespace gen
         createPipeline(renderPass);
     }
 
-    SimpleRenderSystem::~SimpleRenderSystem()
+    PointLightSystem::~PointLightSystem()
     {
         vkDestroyPipelineLayout(genDevice.device(), pipelineLayout, nullptr);
     }
 
-    void SimpleRenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout)
+    void PointLightSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout)
     {
-        VkPushConstantRange pushConstantRange{};
-        pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT; // gives access to push constant data to fragment and vertex shaders
-        pushConstantRange.offset = 0;
-        pushConstantRange.size = sizeof(SimplePushConstantData);
+        // VkPushConstantRange pushConstantRange{};
+        // pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT; // gives access to push constant data to fragment and vertex shaders
+        // pushConstantRange.offset = 0;
+        // pushConstantRange.size = sizeof(SimplePushConstantData);
 
         std::vector<VkDescriptorSetLayout> descriptorSetLayouts{globalSetLayout};
 
@@ -48,25 +42,29 @@ namespace gen
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
         pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data(); // PipelineSetLayouts is used to pass data other than vertex data to our vertex and fragment shaders (textures, uniform buffers)
-        pipelineLayoutInfo.pushConstantRangeCount = 1;
-        pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange; // PushConstants are a way to very efficiently send a small amount of data to our shader programs
+        pipelineLayoutInfo.pushConstantRangeCount = 0;
+        pipelineLayoutInfo.pPushConstantRanges = nullptr; // PushConstants are a way to very efficiently send a small amount of data to our shader programs
         if (vkCreatePipelineLayout(genDevice.device(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
         {
             throw std::runtime_error("failed to create pipeline layout!");
         }
     }
 
-    void SimpleRenderSystem::createPipeline(VkRenderPass renderPass)
+    void PointLightSystem::createPipeline(VkRenderPass renderPass)
     {
         assert(pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
         PipelineConfigInfo pipelineConfig{};
         GenPipeline::defaultPipelineConfigInfo(pipelineConfig);
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.pipelineLayout = pipelineLayout;
-        genPipeline = std::make_unique<GenPipeline>(genDevice, "shaders/simple_shader.vert.spv", "shaders/simple_shader.frag.spv", pipelineConfig);
+        genPipeline = std::make_unique<GenPipeline>(
+            genDevice,
+            "shaders/point_light.vert.spv",
+            "shaders/point_light.frag.spv",
+            pipelineConfig);
     }
 
-    void SimpleRenderSystem::renderGameObjects(FrameInfo &frameInfo)
+    void PointLightSystem::render(FrameInfo &frameInfo)
     {
         genPipeline->bind(frameInfo.commandBuffer);
 
@@ -81,27 +79,6 @@ namespace gen
             nullptr // dynamic offsets
         );
 
-        for (auto &kv : frameInfo.gameObjects)
-        {
-            auto &obj = kv.second;
-            if (obj.model == nullptr)
-            {
-                continue;
-            }
-            SimplePushConstantData push{};
-            push.modelMatrix = obj.transform.mat4();
-            push.normalMatrix = obj.transform.normalMatrix();
-
-            vkCmdPushConstants(
-                frameInfo.commandBuffer,
-                pipelineLayout,
-                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-                0,
-                sizeof(SimplePushConstantData),
-                &push);
-
-            obj.model->bind(frameInfo.commandBuffer);
-            obj.model->draw(frameInfo.commandBuffer);
-        }
+        vkCmdDraw(frameInfo.commandBuffer, 6, 1, 0, 0);
     }
 }

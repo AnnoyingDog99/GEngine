@@ -2,8 +2,9 @@
 
 #include "keyboard_movement_controller.hpp"
 #include "gen_camera.hpp"
-#include "simple_render_system.hpp"
 #include "gen_buffer.hpp"
+#include "systems/simple_render_system.hpp"
+#include "systems/point_light_system.hpp"
 
 // glm
 #define GLM_FORCE_RADIANS           // glm functions will except values in radians, not degrees
@@ -22,7 +23,8 @@ namespace gen
 
     struct GlobalUbo
     {
-        glm::mat4 projectionView{1.f};
+        glm::mat4 projection{1.f};
+        glm::mat4 view{1.f};
         glm::vec4 ambientLightColor{1.f, 1.f, 1.f, .02f};
         glm::vec3 lightPosition{-1.f};
         alignas(16) glm::vec4 lightColor{1.f}; // w is light intensity
@@ -73,6 +75,12 @@ namespace gen
             genDevice,
             genRenderer.getSwapChainRenderPass(),
             globalSetLayout->getDescriptorSetLayout()};
+
+        PointLightSystem pointLightSystem{
+            genDevice,
+            genRenderer.getSwapChainRenderPass(),
+            globalSetLayout->getDescriptorSetLayout()};
+
         GenCamera camera{};
 
         auto viewerObject = GenGameObject::createGameObject();
@@ -108,13 +116,16 @@ namespace gen
 
                 // update
                 GlobalUbo ubo{};
-                ubo.projectionView = camera.getProjection() * camera.getView();
+                ubo.projection = camera.getProjection();
+                ubo.view = camera.getView();
+
                 uboBuffers[frameIndex]->writeToBuffer(&ubo);
                 uboBuffers[frameIndex]->flush();
 
                 // render
                 genRenderer.beginSwapChainRenderPass(commandBuffer);
                 simpleRenderSystem.renderGameObjects(frameInfo);
+                pointLightSystem.render(frameInfo);
                 genRenderer.endSwapChainRenderPass(commandBuffer);
                 genRenderer.endFrame();
             }

@@ -81,8 +81,8 @@ namespace gen
         shaderStages[1].pNext = nullptr;
         shaderStages[1].pSpecializationInfo = nullptr;
 
-        auto bindingDescription = GenModel::Vertex::getBindingDescriptions();
-        auto attributeDescriptions = GenModel::Vertex::getAttributeDescriptions();
+        auto &bindingDescription = configInfo.bindingDescriptions;
+        auto &attributeDescriptions = configInfo.attributeDescriptions;
         VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
         vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
         vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
@@ -210,5 +210,8 @@ namespace gen
         configInfo.dynamicStateInfo.pDynamicStates = configInfo.dynamicStatesEnables.data();
         configInfo.dynamicStateInfo.dynamicStateCount = static_cast<uint32_t>(configInfo.dynamicStatesEnables.size());
         configInfo.dynamicStateInfo.flags = 0;
+
+        configInfo.bindingDescriptions = GenModel::Vertex::getBindingDescriptions();
+        configInfo.attributeDescriptions = GenModel::Vertex::getAttributeDescriptions();
     }
 }
