@@ -66,7 +66,7 @@ namespace gen
         genPipeline = std::make_unique<GenPipeline>(genDevice, "shaders/simple_shader.vert.spv", "shaders/simple_shader.frag.spv", pipelineConfig);
     }
 
-    void SimpleRenderSystem::renderGameObjects(FrameInfo &frameInfo, std::vector<GenGameObject> &gameObjects)
+    void SimpleRenderSystem::renderGameObjects(FrameInfo &frameInfo)
     {
         genPipeline->bind(frameInfo.commandBuffer);
 
@@ -81,8 +81,13 @@ namespace gen
             nullptr // dynamic offsets
         );
 
-        for (auto &obj : gameObjects)
+        for (auto &kv : frameInfo.gameObjects)
         {
+            auto &obj = kv.second;
+            if (obj.model == nullptr)
+            {
+                continue;
+            }
             SimplePushConstantData push{};
             push.modelMatrix = obj.transform.mat4();
             push.normalMatrix = obj.transform.normalMatrix();

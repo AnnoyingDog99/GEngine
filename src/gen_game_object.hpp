@@ -7,6 +7,7 @@
 
 // std
 #include <memory>
+#include <unordered_map>
 
 namespace gen
 {
@@ -30,6 +31,7 @@ namespace gen
     {
     public:
         using id_t = unsigned int;
+        using Map = std::unordered_map<id_t, GenGameObject>;
 
         static GenGameObject createGameObject()
         {

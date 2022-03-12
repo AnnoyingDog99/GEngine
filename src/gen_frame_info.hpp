@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gen_camera.hpp"
+#include "gen_game_object.hpp"
 
 // vulkan
 #include <vulkan/vulkan.h>
@@ -14,5 +15,6 @@ namespace gen
         VkCommandBuffer commandBuffer;
         GenCamera &camera;
         VkDescriptorSet globalDescriptorSet;
+        GenGameObject::Map &gameObjects;
     };
 }

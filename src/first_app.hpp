@@ -36,6 +36,6 @@ namespace gen
 
         // order matters (pool should be destroyed before the devices)
         std::unique_ptr<GenDescriptorPool> globalPool{};
-        std::vector<GenGameObject> gameObjects;
+        GenGameObject::Map gameObjects;
     };
 }
