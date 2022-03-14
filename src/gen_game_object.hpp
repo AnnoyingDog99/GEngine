@@ -27,6 +27,11 @@ namespace gen
         glm::mat3 normalMatrix();
     };
 
+    struct PointLightComponent
+    {
+        float lightIntensity = 1.f;
+    };
+
     class GenGameObject
     {
     public:
@@ -39,6 +44,8 @@ namespace gen
             return GenGameObject{currentId++};
         }
 
+        static GenGameObject makePointLight(float intensity = 10.f, float radius = 0.1f, glm::vec3 color = glm::vec3(1.f));
+
         GenGameObject(const GenGameObject &) = delete;
         GenGameObject &operator=(const GenGameObject &) = delete;
         GenGameObject(GenGameObject &&) = default;
@@ -49,9 +56,12 @@ namespace gen
             return id;
         }
 
-        std::shared_ptr<GenModel> model{};
         glm::vec3 color{};
         TransformComponent transform{};
+
+        // optional pointer components
+        std::shared_ptr<GenModel> model{};
+        std::unique_ptr<PointLightComponent> pointLight = nullptr;
 
     private:
         GenGameObject(id_t objId) : id{objId} {}
