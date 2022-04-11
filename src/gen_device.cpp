@@ -88,9 +88,9 @@ namespace gen
 
     VkApplicationInfo appInfo = {};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    appInfo.pApplicationName = "LittleVulkanEngine App";
+    appInfo.pApplicationName = "GurbeEngine App";
     appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.pEngineName = "No Engine";
+    appInfo.pEngineName = "GurbeEngine";
     appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
     appInfo.apiVersion = VK_API_VERSION_1_0;
 
@@ -117,6 +117,7 @@ namespace gen
       createInfo.pNext = nullptr;
     }
 
+    // pAllocator nullptr means we use the internal allocator, could change this to use https://gpuopen.com/vulkan-memory-allocator/
     if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS)
     {
       throw std::runtime_error("failed to create instance!");
@@ -128,6 +129,7 @@ namespace gen
   void GenDevice::pickPhysicalDevice()
   {
     uint32_t deviceCount = 0;
+    // get the number of devices
     vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
     if (deviceCount == 0)
     {
