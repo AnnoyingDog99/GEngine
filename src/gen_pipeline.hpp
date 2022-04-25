@@ -12,6 +12,7 @@ namespace gen
     // config is here so app can configure pipeline completely, also, config can now be easily shared between different pipelines
     struct PipelineConfigInfo
     {
+        PipelineConfigInfo() = default;
         PipelineConfigInfo(const PipelineConfigInfo &) = delete;
         PipelineConfigInfo &operator=(const PipelineConfigInfo &) = delete;
 
@@ -45,6 +46,7 @@ namespace gen
         void bind(VkCommandBuffer commandBuffer);
 
         static void defaultPipelineConfigInfo(PipelineConfigInfo &configInfo);
+        static void enableAlphaBlending(PipelineConfigInfo &configInfo);
 
     private:
         static std::vector<char> readFile(const std::string &filepath);

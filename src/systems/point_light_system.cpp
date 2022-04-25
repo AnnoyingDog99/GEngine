@@ -10,6 +10,7 @@
 #include <array>
 #include <cassert>
 #include <stdexcept>
+#include <map>
 
 namespace gen
 {
@@ -62,6 +63,7 @@ namespace gen
 
         PipelineConfigInfo pipelineConfig{};
         GenPipeline::defaultPipelineConfigInfo(pipelineConfig);
+        GenPipeline::enableAlphaBlending(pipelineConfig);
         pipelineConfig.attributeDescriptions.clear();
         pipelineConfig.bindingDescriptions.clear();
         pipelineConfig.renderPass = renderPass;
@@ -99,6 +101,21 @@ namespace gen
 
     void PointLightSystem::render(FrameInfo &frameInfo)
     {
+        //sort lights
+        std::map<float, GenGameObject::id_t> sorted;
+        for(auto &kv : frameInfo.gameObjects)
+        {
+            auto &obj = kv.second;
+            if(obj.pointLight == nullptr){
+                continue;
+            }
+
+            //calculate distance
+            auto offset = frameInfo.camera.getPosition() - obj.transform.translation;
+            float disSquared = glm::dot(offset, offset);
+            sorted[disSquared] = obj.getId();
+        }
+
         genPipeline->bind(frameInfo.commandBuffer);
 
         vkCmdBindDescriptorSets(
@@ -111,11 +128,11 @@ namespace gen
             0,
             nullptr);
 
-        for (auto &kv : frameInfo.gameObjects)
+        //iterate through sorted lights in reverse order
+        for (auto it = sorted.rbegin(); it != sorted.rend(); ++it)
         {
-            auto &obj = kv.second;
-            if (obj.pointLight == nullptr)
-                continue;
+            //use game obj id to find light object
+            auto &obj = frameInfo.gameObjects.at(it->second);
 
             PointLightPushConstants push{};
             push.position = glm::vec4(obj.transform.translation, 1.f);
