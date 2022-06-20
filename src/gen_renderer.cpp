@@ -52,11 +52,12 @@ namespace gen
 
         commandBuffers.resize(GenSwapChain::MAX_FRAMES_IN_FLIGHT);
 
-        VkCommandBufferAllocateInfo allocInfo = {};
-        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        allocInfo.commandPool = genDevice.getCommandPool();
-        allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
+        VkCommandBufferAllocateInfo allocInfo = {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+            .commandPool = genDevice.getCommandPool(),
+            .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+            .commandBufferCount = static_cast<uint32_t>(commandBuffers.size()),
+        };
 
         if (vkAllocateCommandBuffers(genDevice.device(), &allocInfo, commandBuffers.data()) != VK_SUCCESS)
         {
@@ -90,8 +91,10 @@ namespace gen
         isFrameStarted = true;
 
         auto commandBuffer = getCurrentCommandBuffer();
-        VkCommandBufferBeginInfo beginInfo{};
-        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+        VkCommandBufferBeginInfo beginInfo{
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        };
 
         if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
         {
@@ -127,30 +130,35 @@ namespace gen
         assert(isFrameStarted && "Can't call beginSwapChainRenderPass if frame is not in progress");
         assert(commandBuffer == getCurrentCommandBuffer() && "Can't begin render pass on command buffer from a diffrent frame");
 
-        VkRenderPassBeginInfo renderpassInfo{};
-        renderpassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderpassInfo.renderPass = genSwapChain->getRenderPass();
-        renderpassInfo.framebuffer = genSwapChain->getFrameBuffer(currentImageIndex);
+        std::array<VkClearValue, 2> clearValues{
+            {
+                {.color = {0.0f, 0.0f, 0.0f, 1.0f}},
+                {.depthStencil = 1.0f},
+            },
+        };
 
-        renderpassInfo.renderArea.offset = {0, 0};
-        renderpassInfo.renderArea.extent = genSwapChain->getSwapChainExtent();
-
-        std::array<VkClearValue, 2> clearValues{};
-        clearValues[0].color = {0.01f, 0.01f, 0.01f, 1.0f};
-        clearValues[1].depthStencil = {1.0f, 0};
-        renderpassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-        renderpassInfo.pClearValues = clearValues.data();
+        VkRenderPassBeginInfo renderpassInfo{
+            .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+            .renderPass = genSwapChain->getRenderPass(),
+            .framebuffer = genSwapChain->getFrameBuffer(currentImageIndex),
+            .renderArea = {
+                .offset = {0, 0},
+                .extent = genSwapChain->getSwapChainExtent()},
+            .clearValueCount = static_cast<uint32_t>(clearValues.size()),
+            .pClearValues = clearValues.data(),
+        };
 
         // record to command buffer
         vkCmdBeginRenderPass(commandBuffer, &renderpassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-        VkViewport viewport{};
-        viewport.x = 0.0f;
-        viewport.y = 0.0f;
-        viewport.width = static_cast<float>(genSwapChain->getSwapChainExtent().width);
-        viewport.height = static_cast<float>(genSwapChain->getSwapChainExtent().height);
-        viewport.minDepth = 0.0f;
-        viewport.maxDepth = 1.0f;
+        VkViewport viewport{
+            .x = 0.0f,
+            .y = 0.0f,
+            .width = static_cast<float>(genSwapChain->getSwapChainExtent().width),
+            .height = static_cast<float>(genSwapChain->getSwapChainExtent().height),
+            .minDepth = 0.0f,
+            .maxDepth = 1.0f,
+        };
         VkRect2D scissor{{0, 0}, genSwapChain->getSwapChainExtent()};
         vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
         vkCmdSetScissor(commandBuffer, 0, 1, &scissor);

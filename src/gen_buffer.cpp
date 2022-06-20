@@ -124,11 +124,12 @@ namespace gen
      */
     VkResult GenBuffer::flush(VkDeviceSize size, VkDeviceSize offset)
     {
-        VkMappedMemoryRange mappedRange = {};
-        mappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-        mappedRange.memory = memory;
-        mappedRange.offset = offset;
-        mappedRange.size = size;
+        VkMappedMemoryRange mappedRange = {
+            .sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE,
+            .memory = memory,
+            .offset = offset,
+            .size = size,
+        };
         return vkFlushMappedMemoryRanges(genDevice.device(), 1, &mappedRange);
     }
 
@@ -145,11 +146,12 @@ namespace gen
      */
     VkResult GenBuffer::invalidate(VkDeviceSize size, VkDeviceSize offset)
     {
-        VkMappedMemoryRange mappedRange = {};
-        mappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-        mappedRange.memory = memory;
-        mappedRange.offset = offset;
-        mappedRange.size = size;
+        VkMappedMemoryRange mappedRange = {
+            .sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE,
+            .memory = memory,
+            .offset = offset,
+            .size = size,
+        };
         return vkInvalidateMappedMemoryRanges(genDevice.device(), 1, &mappedRange);
     }
 

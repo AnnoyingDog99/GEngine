@@ -16,11 +16,13 @@ namespace gen
         uint32_t count)
     {
         assert(bindings.count(binding) == 0 && "Binding already in use");
-        VkDescriptorSetLayoutBinding layoutBinding{};
-        layoutBinding.binding = binding;
-        layoutBinding.descriptorType = descriptorType;
-        layoutBinding.descriptorCount = count;
-        layoutBinding.stageFlags = stageFlags;
+        VkDescriptorSetLayoutBinding layoutBinding{
+            .binding = binding,
+            .descriptorType = descriptorType,
+            .descriptorCount = count,
+            .stageFlags = stageFlags,
+        };
+
         bindings[binding] = layoutBinding;
         return *this;
     }
@@ -42,10 +44,11 @@ namespace gen
             setLayoutBindings.push_back(kv.second);
         }
 
-        VkDescriptorSetLayoutCreateInfo descriptorSetLayoutInfo{};
-        descriptorSetLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-        descriptorSetLayoutInfo.bindingCount = static_cast<uint32_t>(setLayoutBindings.size());
-        descriptorSetLayoutInfo.pBindings = setLayoutBindings.data();
+        VkDescriptorSetLayoutCreateInfo descriptorSetLayoutInfo{
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+            .bindingCount = static_cast<uint32_t>(setLayoutBindings.size()),
+            .pBindings = setLayoutBindings.data(),
+        };
 
         if (vkCreateDescriptorSetLayout(
                 genDevice.device(),
@@ -96,12 +99,13 @@ namespace gen
         VkDescriptorPoolCreateFlags poolFlags,
         const std::vector<VkDescriptorPoolSize> &poolSizes) : genDevice{genDevice}
     {
-        VkDescriptorPoolCreateInfo descriptorPoolInfo{};
-        descriptorPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-        descriptorPoolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
-        descriptorPoolInfo.pPoolSizes = poolSizes.data();
-        descriptorPoolInfo.maxSets = maxSets;
-        descriptorPoolInfo.flags = poolFlags;
+        VkDescriptorPoolCreateInfo descriptorPoolInfo{
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+            .flags = poolFlags,
+            .maxSets = maxSets,
+            .poolSizeCount = static_cast<uint32_t>(poolSizes.size()),
+            .pPoolSizes = poolSizes.data(),
+        };
 
         if (vkCreateDescriptorPool(genDevice.device(), &descriptorPoolInfo, nullptr, &descriptorPool) !=
             VK_SUCCESS)
@@ -118,11 +122,12 @@ namespace gen
     bool GenDescriptorPool::allocateDescriptor(
         const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet &descriptor) const
     {
-        VkDescriptorSetAllocateInfo allocInfo{};
-        allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-        allocInfo.descriptorPool = descriptorPool;
-        allocInfo.pSetLayouts = &descriptorSetLayout;
-        allocInfo.descriptorSetCount = 1;
+        VkDescriptorSetAllocateInfo allocInfo{
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+            .descriptorPool = descriptorPool,
+            .descriptorSetCount = 1,
+            .pSetLayouts = &descriptorSetLayout,
+        };
 
         // Might want to create a "DescriptorPoolManager" class that handles this case, and builds
         // a new pool whenever an old pool fills up. But this is beyond our current scope
@@ -163,12 +168,13 @@ namespace gen
             bindingDescription.descriptorCount == 1 &&
             "Binding single descriptor info, but binding expects multiple");
 
-        VkWriteDescriptorSet write{};
-        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        write.descriptorType = bindingDescription.descriptorType;
-        write.dstBinding = binding;
-        write.pBufferInfo = bufferInfo;
-        write.descriptorCount = 1;
+        VkWriteDescriptorSet write{
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .dstBinding = binding,
+            .descriptorCount = 1,
+            .descriptorType = bindingDescription.descriptorType,
+            .pBufferInfo = bufferInfo,
+        };
 
         writes.push_back(write);
         return *this;
@@ -185,12 +191,13 @@ namespace gen
             bindingDescription.descriptorCount == 1 &&
             "Binding single descriptor info, but binding expects multiple");
 
-        VkWriteDescriptorSet write{};
-        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        write.descriptorType = bindingDescription.descriptorType;
-        write.dstBinding = binding;
-        write.pImageInfo = imageInfo;
-        write.descriptorCount = 1;
+        VkWriteDescriptorSet write{
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .dstBinding = binding,
+            .descriptorCount = 1,
+            .descriptorType = bindingDescription.descriptorType,
+            .pImageInfo = imageInfo,
+        };
 
         writes.push_back(write);
         return *this;
