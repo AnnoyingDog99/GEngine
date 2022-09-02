@@ -35,22 +35,19 @@ namespace gen
 
     void SimpleRenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout)
     {
-        VkPushConstantRange pushConstantRange{
-            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-            .offset = 0,
-            .size = sizeof(SimplePushConstantData),
-        };
+        VkPushConstantRange pushConstantRange{};
+        pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+        pushConstantRange.offset = 0;
+        pushConstantRange.size = sizeof(SimplePushConstantData);
 
         std::vector<VkDescriptorSetLayout> descriptorSetLayouts{globalSetLayout};
 
-        VkPipelineLayoutCreateInfo pipelineLayoutInfo{
-            .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-            .setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size()),
-            .pSetLayouts = descriptorSetLayouts.data(),
-            .pushConstantRangeCount = 1,
-            .pPushConstantRanges = &pushConstantRange,
-        };
-
+        VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+        pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+        pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
+        pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
+        pipelineLayoutInfo.pushConstantRangeCount = 1;
+        pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
         if (vkCreatePipelineLayout(genDevice.device(), &pipelineLayoutInfo, nullptr, &pipelineLayout) !=
             VK_SUCCESS)
         {
@@ -62,11 +59,10 @@ namespace gen
     {
         assert(pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
 
-        PipelineConfigInfo pipelineConfig{
-            .pipelineLayout = pipelineLayout,
-            .renderPass = renderPass,
-        };
+        PipelineConfigInfo pipelineConfig{};
         GenPipeline::defaultPipelineConfigInfo(pipelineConfig);
+        pipelineConfig.renderPass = renderPass;
+        pipelineConfig.pipelineLayout = pipelineLayout;
         genPipeline = std::make_unique<GenPipeline>(
             genDevice,
             "shaders/simple_shader.vert.spv",
@@ -93,11 +89,9 @@ namespace gen
             auto &obj = kv.second;
             if (obj.model == nullptr)
                 continue;
-
-            SimplePushConstantData push{
-                .modelMatrix = obj.transform.mat4(),
-                .normalMatrix = obj.transform.normalMatrix(),
-            };
+            SimplePushConstantData push{};
+            push.modelMatrix = obj.transform.mat4();
+            push.normalMatrix = obj.transform.normalMatrix();
 
             vkCmdPushConstants(
                 frameInfo.commandBuffer,

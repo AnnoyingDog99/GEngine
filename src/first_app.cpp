@@ -117,7 +117,7 @@ namespace gen
                 // render
                 genRenderer.beginSwapChainRenderPass(commandBuffer);
 
-                // order here matters, first solid, then semi-transparent
+                //order here matters, first solid, then semi-transparent
                 simpleRenderSystem.renderGameObjects(frameInfo);
                 pointLightSystem.render(frameInfo);
 

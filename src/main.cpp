@@ -1,20 +1,16 @@
 #include "first_app.hpp"
 
-// std
+//std
 #include <cstdlib>
 #include <iostream>
 #include <stdexcept>
 
-int main()
-{
+int main(){
     gen::FirstApp app{};
 
-    try
-    {
+    try{
         app.run();
-    }
-    catch (const std::exception &e)
-    {
+    } catch (const std::exception &e){
         std::cerr << e.what() << std::endl;
         return EXIT_FAILURE;
     }
