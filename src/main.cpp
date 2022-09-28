@@ -1,4 +1,4 @@
-#include "first_app.hpp"
+#include "app.hpp"
 
 //std
 #include <cstdlib>
@@ -6,7 +6,7 @@
 #include <stdexcept>
 
 int main(){
-    gen::FirstApp app{};
+    gen::App app{};
 
     try{
         app.run();

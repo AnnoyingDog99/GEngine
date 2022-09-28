@@ -1,4 +1,3 @@
-# Optional set TINYOBJ_PATH to target specific version, otherwise defaults to external/tinyobjloader
 set(TINYOBJ_PATH C:/dev/Libraries/tinyobjloader)
 set(GLFW_PATH C:/dev/Libraries/glfw-3.3.6.bin.WIN64)
 set(GLM_PATH C:/dev/Libraries/glm)

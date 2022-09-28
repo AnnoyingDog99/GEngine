@@ -1,4 +1,4 @@
-#include "first_app.hpp"
+#include "app.hpp"
 
 #include "keyboard_movement_controller.hpp"
 #include "gen_camera.hpp"
@@ -21,7 +21,7 @@
 namespace gen
 {
 
-    FirstApp::FirstApp()
+    App::App()
     {
         globalPool =
             GenDescriptorPool::Builder(genDevice)
@@ -31,9 +31,9 @@ namespace gen
         loadGameObjects();
     }
 
-    FirstApp::~FirstApp() {}
+    App::~App() {}
 
-    void FirstApp::run()
+    void App::run()
     {
 
         std::vector<std::unique_ptr<GenBuffer>> uboBuffers(GenSwapChain::MAX_FRAMES_IN_FLIGHT);
@@ -129,22 +129,15 @@ namespace gen
         vkDeviceWaitIdle(genDevice.device()); // cpu will block till all gpu operations are finished
     }
 
-    void FirstApp::loadGameObjects()
+    void App::loadGameObjects()
     {
-        std::shared_ptr<GenModel> genModel = GenModel::createModelFromFile(genDevice, "models/flat_vase.obj");
+        std::shared_ptr<GenModel> genModel = GenModel::createModelFromFile(genDevice, "models/armadillo.obj");
 
-        auto flatVase = GenGameObject::createGameObject();
-        flatVase.model = genModel;
-        flatVase.transform.translation = {-.5f, .5f, 0.f};
-        flatVase.transform.scale = {3.f, 1.5f, 3.f};
-        gameObjects.emplace(flatVase.getId(), std::move(flatVase));
-
-        genModel = GenModel::createModelFromFile(genDevice, "models/smooth_vase.obj");
-        auto smoothVase = GenGameObject::createGameObject();
-        smoothVase.model = genModel;
-        smoothVase.transform.translation = {.5f, .5f, 0.f};
-        smoothVase.transform.scale = {3.f, 1.5f, 3.f};
-        gameObjects.emplace(smoothVase.getId(), std::move(smoothVase));
+        auto armadillo = GenGameObject::createGameObject();
+        armadillo.model = genModel;
+        armadillo.transform.translation = {0.f, 0.f, 0.f};
+        armadillo.transform.scale = {0.3f, -0.3f, 0.3f};
+        gameObjects.emplace(armadillo.getId(), std::move(armadillo));
 
         genModel = GenModel::createModelFromFile(genDevice, "models/quad.obj");
         auto floor = GenGameObject::createGameObject();

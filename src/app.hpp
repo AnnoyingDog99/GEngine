@@ -12,18 +12,18 @@
 
 namespace gen
 {
-    class FirstApp
+    class App
     {
 
     public:
         static constexpr int WIDTH = 800;
         static constexpr int HEIGHT = 600;
 
-        FirstApp();
-        ~FirstApp();
+        App();
+        ~App();
 
-        FirstApp(const FirstApp &) = delete;
-        FirstApp &operator=(const FirstApp &) = delete;
+        App(const App &) = delete;
+        App &operator=(const App &) = delete;
 
         void run();
 

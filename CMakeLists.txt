@@ -17,13 +17,13 @@ endif()
 
 project(${NAME} VERSION 0.1.0)
 
-# 1. Set VULKAN_SDK_PATH in .env.cmake to target specific vulkan version
+# Set VULKAN_SDK_PATH in .env.cmake to target specific vulkan version
 if (DEFINED VULKAN_SDK_PATH)
-  set(Vulkan_INCLUDE_DIRS "${VULKAN_SDK_PATH}/Include") # 1.1 Make sure this include path is correct
-  set(Vulkan_LIBRARIES "${VULKAN_SDK_PATH}/Lib") # 1.2 Make sure lib path is correct
+  set(Vulkan_INCLUDE_DIRS "${VULKAN_SDK_PATH}/Include")
+  set(Vulkan_LIBRARIES "${VULKAN_SDK_PATH}/Lib")
   set(Vulkan_FOUND "True")
 else()
-  find_package(Vulkan REQUIRED) # throws error if could not find Vulkan
+  find_package(Vulkan REQUIRED)
   message(STATUS "Found Vulkan: $ENV{VULKAN_SDK}")
 endif()
 if (NOT Vulkan_FOUND)
@@ -33,15 +33,15 @@ else()
 endif()
 
 
-# 2. Set GLFW_PATH in .env.cmake to target specific glfw
+# Set GLFW_PATH in .env.cmake to target specific glfw
 if (DEFINED GLFW_PATH)
   message(STATUS "Using GLFW path specified in .env")
   set(GLFW_INCLUDE_DIRS "${GLFW_PATH}/include")
   if (MSVC)
-    set(GLFW_LIB "${GLFW_PATH}/lib-vc2019") # 2.1 Update lib-vc2019 to use same version as your visual studio
+    set(GLFW_LIB "${GLFW_PATH}/lib-vc2019") # Update lib-vc2019 to use same version as your visual studio
   elseif (CMAKE_GENERATOR STREQUAL "MinGW Makefiles")
     message(STATUS "USING MINGW")
-    set(GLFW_LIB "${GLFW_PATH}/lib-mingw-w64") # 2.1 make sure matches glfw mingw subdirectory
+    set(GLFW_LIB "${GLFW_PATH}/lib-mingw-w64") # make sure matches glfw mingw subdirectory
   endif()
 else()
   find_package(glfw3 3.3 REQUIRED)
@@ -56,7 +56,6 @@ endif()
 
 include_directories(external)
 
-# If TINYOBJ_PATH not specified in .env.cmake, try fetching from git repo
 if (NOT TINYOBJ_PATH)
   message(STATUS "TINYOBJ_PATH not specified in .env.cmake, using external/tinyobjloader")
   set(TINYOBJ_PATH external/tinyobjloader)
@@ -106,11 +105,9 @@ elseif (UNIX)
 endif()
 
 
-############## Build SHADERS #######################
+# Build SHADERS
 
-# Find all vertex and fragment sources within shaders directory
-# taken from VBlancos vulkan tutorial
-# https://github.com/vblanco20-1/vulkan-guide/blob/all-chapters/CMakeLists.txt
+## Find all vertex and fragment sources within shaders directory
 find_program(GLSL_VALIDATOR glslangValidator HINTS 
   ${Vulkan_GLSLANG_VALIDATOR_EXECUTABLE} 
   /usr/bin 
